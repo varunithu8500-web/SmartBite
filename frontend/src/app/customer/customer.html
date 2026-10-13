@@ -1,0 +1,248 @@
+<div class="container">
+
+  <!-- Header -->
+  <header class="header">
+    <h1>🍽️ SmartBite</h1>
+    <p>Smart Canteen Pre-Ordering System</p>
+
+    <!-- Authentication Navigation -->
+    <nav class="auth-navigation" aria-label="Account navigation">
+      @if (isLoggedIn()) {
+        <span class="welcome-message">
+          Welcome, {{ getCustomerName() }}!
+        </span>
+
+        <button type="button" (click)="logout()">
+          Logout
+        </button>
+      } @else {
+        <a routerLink="/login">Login</a>
+        <a routerLink="/register">Register</a>
+      }
+    </nav>
+  </header>
+
+  <main>
+
+    <!-- Food Menu -->
+    <section class="menu-section">
+      <h2>Today's Menu</h2>
+
+      @if (errorMessage()) {
+        <p class="error">{{ errorMessage() }}</p>
+
+        <button type="button" (click)="loadFoods()">
+          Retry
+        </button>
+      } @else if (foods().length === 0) {
+        <p>No food items available.</p>
+      } @else {
+        <div class="food-list">
+          @for (food of foods(); track food._id) {
+            <div class="food-card">
+              <h3>{{ food.name }}</h3>
+              <p>{{ food.category }}</p>
+              <p class="price">₹{{ food.price }}</p>
+
+              <button
+                type="button"
+                (click)="addToCart(food)">
+                Add to Cart
+              </button>
+            </div>
+          }
+        </div>
+      }
+    </section>
+
+    <!-- Shopping Cart -->
+    <section class="cart-section">
+      <h2>🛒 Your Cart</h2>
+
+      <p>Total items: {{ getCartQuantity() }}</p>
+
+      @if (cartItems().length === 0) {
+        <p>Your cart is empty. Add some delicious food!</p>
+      } @else {
+
+        <!-- Cart Items -->
+        <div class="cart-list">
+          @for (item of cartItems(); track item.food._id) {
+            <div class="cart-item">
+
+              <div class="cart-item-details">
+                <h3>{{ item.food.name }}</h3>
+                <p>₹{{ item.food.price }} each</p>
+
+                <p>
+                  Subtotal: ₹{{ item.food.price * item.quantity }}
+                </p>
+              </div>
+
+              <!-- Quantity Controls -->
+              <div class="quantity-controls">
+                <button
+                  type="button"
+                  (click)="decreaseQuantity(item.food._id)"
+                  [attr.aria-label]="'Decrease quantity of ' + item.food.name">
+                  −
+                </button>
+
+                <span>{{ item.quantity }}</span>
+
+                <button
+                  type="button"
+                  (click)="increaseQuantity(item.food._id)"
+                  [attr.aria-label]="'Increase quantity of ' + item.food.name">
+                  +
+                </button>
+              </div>
+
+              <!-- Remove Item -->
+              <button
+                type="button"
+                class="remove-button"
+                (click)="removeFromCart(item.food._id)">
+                Remove
+              </button>
+
+            </div>
+          }
+        </div>
+
+        <!-- Grand Total -->
+        <div class="cart-total">
+          <h3>Grand Total: ₹{{ getCartTotal() }}</h3>
+        </div>
+
+        <!-- Place Order Button -->
+        <div class="order-actions">
+          <button
+            type="button"
+            class="place-order-button"
+            [disabled]="isPlacingOrder()"
+            (click)="placeOrder()">
+
+            {{ isPlacingOrder() ? 'Placing Order...' : 'Place Order' }}
+
+          </button>
+
+          @if (!isLoggedIn()) {
+            <p class="login-hint">
+              Please log in before placing your order.
+            </p>
+          }
+        </div>
+
+      }
+
+      <!-- Order Success Message -->
+      @if (orderMessage()) {
+        <div class="success-message" role="status">
+          <h3>✅ Order Placed Successfully!</h3>
+          <p>{{ orderMessage() }}</p>
+        </div>
+      }
+
+      <!-- Order Error Message -->
+      @if (orderError()) {
+        <p class="error" role="alert">
+          {{ orderError() }}
+        </p>
+      }
+
+    </section>
+
+    <!-- Customer Order History -->
+    <section class="order-history-section">
+      <h2>📋 Order History</h2>
+
+      @if (!isLoggedIn()) {
+        <p>
+          Please
+          <a routerLink="/login">log in</a>
+          to view your order history.
+        </p>
+      } @else {
+
+        @if (orderStatusMessage()) {
+          <p class="success-message" role="status">
+            ✅ {{ orderStatusMessage() }}
+          </p>
+        }
+
+        @if (isLoadingOrders()) {
+          <p>Loading order history...</p>
+        } @else if (orderHistoryError()) {
+          <p class="error" role="alert">
+            {{ orderHistoryError() }}
+          </p>
+
+          <button type="button" (click)="loadOrders()">
+            Retry
+          </button>
+        } @else if (orders().length === 0) {
+          <p>No orders have been placed yet.</p>
+        } @else {
+
+          <div class="order-history-list">
+            @for (order of orders(); track order._id) {
+              <article class="order-history-card">
+
+                <h3>Order #{{ order._id }}</h3>
+
+                <!-- Read-only Order Status -->
+                <div class="order-status-control">
+                  <span class="order-status-label">
+                    Order Status:
+                  </span>
+
+                  <span
+                    class="order-status-badge"
+                    [class.pending]="order.status === 'Pending'"
+                    [class.preparing]="order.status === 'Preparing'"
+                    [class.ready]="order.status === 'Ready'"
+                    [class.completed]="order.status === 'Completed'"
+                    [class.cancelled]="order.status === 'Cancelled'"
+                    role="status">
+                    {{ order.status }}
+                  </span>
+                </div>
+
+                <p>
+                  Date: {{ order.createdAt | date:'medium' }}
+                </p>
+
+                <!-- Ordered Items -->
+                <div class="order-history-items">
+                  @for (item of order.items; track item._id || item.foodId) {
+                    <div class="order-history-item">
+                      <span>
+                        {{ item.name }} × {{ item.quantity }}
+                      </span>
+
+                      <span>
+                        ₹{{ item.price * item.quantity }}
+                      </span>
+                    </div>
+                  }
+                </div>
+
+                <!-- Order Total -->
+                <div class="order-history-total">
+                  <strong>
+                    Total Amount: ₹{{ order.totalAmount }}
+                  </strong>
+                </div>
+
+              </article>
+            }
+          </div>
+
+        }
+      }
+    </section>
+
+  </main>
+
+</div>

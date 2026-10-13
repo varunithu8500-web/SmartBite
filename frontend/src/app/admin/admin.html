@@ -1,0 +1,790 @@
+<div class="admin-container">
+
+  <!-- ============================= -->
+  <!-- ADMIN HEADER                  -->
+  <!-- ============================= -->
+
+  <header class="admin-header">
+    <div>
+      <h1>🍽️ SmartBite Admin Panel</h1>
+      <p>Manage your canteen menu and customer orders.</p>
+    </div>
+
+    <div class="header-actions">
+      <button
+        type="button"
+        class="refresh-button"
+        (click)="loadFoods()">
+        ↻ Refresh Menu
+      </button>
+
+      <button
+        type="button"
+        class="refresh-button"
+        (click)="loadOrders()"
+        [disabled]="isLoadingOrders()">
+        {{ isLoadingOrders() ? 'Loading Orders...' : '↻ Refresh Orders' }}
+      </button>
+    </div>
+  </header>
+
+
+  <!-- ============================= -->
+  <!-- FOOD DASHBOARD SUMMARY        -->
+  <!-- ============================= -->
+
+  <!-- ADMIN DASHBOARD ANALYTICS -->
+
+<section class="dashboard">
+
+  <!-- Total Food Items -->
+  <div class="summary-card">
+    <h3>🍽️ Total Food Items</h3>
+    <p>{{ foods().length }}</p>
+  </div>
+
+  <!-- Available Food Items -->
+  <div class="summary-card">
+    <h3>✅ Available Items</h3>
+    <p>{{ getAvailableCount() }}</p>
+  </div>
+
+  <!-- Total Orders -->
+  <div class="summary-card">
+    <h3>🛒 Total Orders</h3>
+    <p>{{ getOrderCount('All') }}</p>
+  </div>
+
+  <!-- Today's Orders -->
+  <div class="summary-card">
+    <h3>📅 Today's Orders</h3>
+    <p>{{ getTodayOrderCount() }}</p>
+  </div>
+
+  <!-- Pending Orders -->
+  <div class="summary-card">
+    <h3>⏳ Pending Orders</h3>
+    <p>{{ getOrderCount('Pending') }}</p>
+  </div>
+
+  <!-- Total Revenue -->
+  <div class="summary-card">
+    <h3>💰 Total Revenue</h3>
+    <p>{{ getTotalRevenue() | currency:'INR':'symbol':'1.2-2' }}</p>
+  </div>
+
+</section>
+
+  <!-- ORDER STATUS ANALYTICS CHART -->
+  <section class="chart-section">
+    <div class="chart-header">
+      <h2>📊 Order Analytics</h2>
+      <p>Track the distribution of customer orders by status.</p>
+    </div>
+
+    <div class="chart-container">
+      <canvas
+        baseChart
+        [type]="orderChartType"
+        [data]="orderChartData"
+        [options]="orderChartOptions"
+        aria-label="Doughnut chart showing orders by status">
+</canvas>
+    </div>
+  </section>
+
+
+  <!-- DAILY ORDER ANALYTICS CHART -->
+  <section class="chart-section">
+    <div class="chart-header">
+      <h2>📈 Daily Order Analytics</h2>
+      <p>Track the number of customer orders placed over the last seven days.</p>
+    </div>
+
+    <div class="chart-container">
+      <canvas
+        baseChart
+        [type]="dailyChartType"
+        [data]="dailyChartData"
+        [options]="dailyChartOptions"
+        aria-label="Bar chart showing daily order counts for the last seven days">
+      </canvas>
+    </div>
+  </section>
+
+
+  <!-- MOST POPULAR FOOD ITEMS CHART -->
+  <section class="chart-section">
+    <div class="chart-header">
+      <h2>🏆 Most Popular Food Items</h2>
+      <p>Top five food items ranked by the total quantity customers have ordered.</p>
+    </div>
+
+    <div class="chart-container">
+      <canvas
+        baseChart
+        [type]="popularFoodChartType"
+        [data]="popularFoodChartData"
+        [options]="popularFoodChartOptions"
+        aria-label="Horizontal bar chart showing the five most ordered food items by quantity">
+      </canvas>
+    </div>
+
+    @if (popularFoodChartData.labels?.length === 0) {
+      <p class="empty-message">
+        No ordered food items to analyze yet. Popularity will appear after customers place orders.
+      </p>
+    }
+  </section>
+
+
+  <!-- ============================= -->
+  <!-- ADD FOOD FORM                 -->
+  <!-- ============================= -->
+
+  <section class="add-food-section">
+
+    <h2>➕ Add New Food</h2>
+
+    <p class="section-description">
+      Enter the details of a new canteen food item.
+    </p>
+
+    <form (submit)="$event.preventDefault(); addFood()">
+
+      <div class="form-grid">
+
+        <div class="form-group">
+          <label for="foodName">Food Name</label>
+
+          <input
+            id="foodName"
+            type="text"
+            placeholder="e.g. Vada"
+            [value]="foodName()"
+            (input)="foodName.set($any($event.target).value)"
+            required>
+        </div>
+
+        <div class="form-group">
+          <label for="foodPrice">Price (₹)</label>
+
+          <input
+            id="foodPrice"
+            type="number"
+            min="0"
+            step="0.01"
+            placeholder="e.g. 15"
+            [value]="foodPrice() ?? ''"
+            (input)="foodPrice.set(toNumber($any($event.target).value))"
+            required>
+        </div>
+
+        <div class="form-group">
+          <label for="foodCategory">Category</label>
+
+          <input
+            id="foodCategory"
+            type="text"
+            placeholder="e.g. Snacks"
+            [value]="foodCategory()"
+            (input)="foodCategory.set($any($event.target).value)"
+            required>
+        </div>
+
+      </div>
+
+      <button
+        type="submit"
+        class="primary-button"
+        [disabled]="isAddingFood()">
+
+        {{ isAddingFood() ? 'Adding Food...' : 'Add Food Item' }}
+
+      </button>
+
+    </form>
+
+    @if (addFoodMessage()) {
+      <p class="form-message" role="status">
+        {{ addFoodMessage() }}
+      </p>
+    }
+
+  </section>
+
+
+  <!-- ============================= -->
+  <!-- FOOD ERROR MESSAGE            -->
+  <!-- ============================= -->
+
+  @if (errorMessage()) {
+    <div class="error-message" role="alert">
+      {{ errorMessage() }}
+    </div>
+  }
+
+
+  <!-- ============================= -->
+  <!-- EDIT FOOD FORM                -->
+  <!-- ============================= -->
+
+  @if (editingFoodId()) {
+
+    <section class="edit-food-section">
+
+      <h2>✏️ Edit Food Item</h2>
+
+      <p class="section-description">
+        Update the food details below.
+      </p>
+
+      <form (submit)="$event.preventDefault(); updateFood()">
+
+        <div class="form-grid">
+
+          <div class="form-group">
+            <label for="editFoodName">Food Name</label>
+
+            <input
+              id="editFoodName"
+              type="text"
+              [value]="editFoodName()"
+              (input)="editFoodName.set($any($event.target).value)"
+              required>
+          </div>
+
+          <div class="form-group">
+            <label for="editFoodPrice">Price (₹)</label>
+
+            <input
+              id="editFoodPrice"
+              type="number"
+              min="0"
+              step="0.01"
+              [value]="editFoodPrice() ?? ''"
+              (input)="editFoodPrice.set(toNumber($any($event.target).value))"
+              required>
+          </div>
+
+          <div class="form-group">
+            <label for="editFoodCategory">Category</label>
+
+            <input
+              id="editFoodCategory"
+              type="text"
+              [value]="editFoodCategory()"
+              (input)="editFoodCategory.set($any($event.target).value)"
+              required>
+          </div>
+
+        </div>
+
+        @if (editFoodMessage()) {
+          <p class="form-message" role="alert">
+            {{ editFoodMessage() }}
+          </p>
+        }
+
+        <div class="edit-actions">
+
+          <button
+            type="submit"
+            class="primary-button"
+            [disabled]="isUpdatingFood()">
+
+            {{ isUpdatingFood() ? 'Saving...' : 'Save Changes' }}
+
+          </button>
+
+          <button
+            type="button"
+            class="cancel-button"
+            [disabled]="isUpdatingFood()"
+            (click)="cancelEditing()">
+
+            Cancel
+
+          </button>
+
+        </div>
+
+      </form>
+
+    </section>
+
+  }
+
+
+  <!-- ============================= -->
+  <!-- FOOD MANAGEMENT TABLE         -->
+  <!-- ============================= -->
+
+  <section class="food-management">
+
+    <h2>🍛 Food Menu</h2>
+
+    <p class="section-description">
+      View and manage all canteen food items.
+    </p>
+
+    @if (foods().length === 0 && !errorMessage()) {
+
+      <p class="empty-message">
+        No food items found.
+      </p>
+
+    } @else if (foods().length > 0) {
+
+      <div class="table-wrapper">
+
+        <table>
+
+          <thead>
+            <tr>
+              <th>Food Name</th>
+              <th>Price</th>
+              <th>Category</th>
+              <th>Availability</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+
+          <tbody>
+
+            @for (food of foods(); track food._id) {
+
+              <tr>
+
+                <td class="food-name">
+                  {{ food.name }}
+                </td>
+
+                <td>
+                  {{ food.price | currency:'INR':'symbol':'1.2-2' }}
+                </td>
+
+                <td>
+                  <span class="category-badge">
+                    {{ food.category }}
+                  </span>
+                </td>
+
+                <td>
+
+                  <span
+                    class="status-badge"
+                    [class.available]="food.available"
+                    [class.unavailable]="!food.available">
+
+                    {{ food.available ? 'Available' : 'Unavailable' }}
+
+                  </span>
+
+                </td>
+
+                <td>
+
+                  <div class="table-actions">
+
+                    <button
+                      type="button"
+                      class="edit-button"
+                      (click)="startEditing(food)">
+
+                      Edit
+
+                    </button>
+
+                    <button
+                      type="button"
+                      class="availability-button"
+                      [class.make-available]="!food.available"
+                      (click)="toggleAvailability(food)">
+
+                      {{ food.available ? 'Mark Unavailable' : 'Mark Available' }}
+
+                    </button>
+
+                    <button
+                      type="button"
+                      class="delete-btn"
+                      (click)="deleteFood(food)">
+
+                      Delete
+
+                    </button>
+
+                  </div>
+
+                </td>
+
+              </tr>
+
+            }
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+    }
+
+  </section>
+
+
+  <!-- ================================================= -->
+  <!-- ORDER MANAGEMENT DASHBOARD                        -->
+  <!-- ================================================= -->
+
+  <section class="order-management">
+
+    <div class="section-header">
+
+      <div>
+        <h2>📋 Order Management</h2>
+
+        <p class="section-description">
+          View customer orders and manage their progress.
+        </p>
+      </div>
+
+      <button
+        type="button"
+        class="refresh-button"
+        (click)="loadOrders()"
+        [disabled]="isLoadingOrders()">
+
+        {{ isLoadingOrders() ? 'Loading...' : '↻ Refresh Orders' }}
+
+      </button>
+
+    </div>
+
+
+    <!-- ORDER SUMMARY CARDS -->
+
+    <div class="order-summary">
+
+      <button
+        type="button"
+        class="order-summary-card"
+        [class.active-filter]="selectedOrderStatus() === 'All'"
+        (click)="filterOrders('All')">
+
+        <span>Total Orders</span>
+        <strong>{{ getOrderCount('All') }}</strong>
+
+      </button>
+
+      <button
+        type="button"
+        class="order-summary-card pending-card"
+        [class.active-filter]="selectedOrderStatus() === 'Pending'"
+        (click)="filterOrders('Pending')">
+
+        <span>Pending</span>
+        <strong>{{ getOrderCount('Pending') }}</strong>
+
+      </button>
+
+      <button
+        type="button"
+        class="order-summary-card preparing-card"
+        [class.active-filter]="selectedOrderStatus() === 'Preparing'"
+        (click)="filterOrders('Preparing')">
+
+        <span>Preparing</span>
+        <strong>{{ getOrderCount('Preparing') }}</strong>
+
+      </button>
+
+      <button
+        type="button"
+        class="order-summary-card ready-card"
+        [class.active-filter]="selectedOrderStatus() === 'Ready'"
+        (click)="filterOrders('Ready')">
+
+        <span>Ready</span>
+        <strong>{{ getOrderCount('Ready') }}</strong>
+
+      </button>
+
+      <button
+        type="button"
+        class="order-summary-card completed-card"
+        [class.active-filter]="selectedOrderStatus() === 'Completed'"
+        (click)="filterOrders('Completed')">
+
+        <span>Completed</span>
+        <strong>{{ getOrderCount('Completed') }}</strong>
+
+      </button>
+
+      <button
+        type="button"
+        class="order-summary-card cancelled-card"
+        [class.active-filter]="selectedOrderStatus() === 'Cancelled'"
+        (click)="filterOrders('Cancelled')">
+
+        <span>Cancelled</span>
+        <strong>{{ getOrderCount('Cancelled') }}</strong>
+
+      </button>
+
+    </div>
+
+
+    <!-- ORDER FEEDBACK MESSAGES -->
+
+    @if (orderSuccessMessage()) {
+      <div class="success-message" role="status">
+        {{ orderSuccessMessage() }}
+      </div>
+    }
+
+    @if (orderErrorMessage()) {
+      <div class="error-message" role="alert">
+        {{ orderErrorMessage() }}
+      </div>
+    }
+
+
+    <!-- ORDER LOADING STATE -->
+
+    @if (isLoadingOrders()) {
+
+      <div class="loading-message">
+        <p>Loading customer orders...</p>
+      </div>
+
+    } @else {
+
+      <!-- Filter Orders by Status -->
+<div class="order-filters">
+  @for (status of orderStatuses; track status) {
+    <button
+      type="button"
+      class="filter-button"
+      [class.active]="selectedOrderStatus() === status"
+      [attr.aria-pressed]="selectedOrderStatus() === status"
+      (click)="filterOrders(status)"
+    >
+      {{ status }}
+      <span class="filter-count">
+        {{ getOrderCount(status) }}
+      </span>
+    </button>
+  }
+</div>
+
+
+      <!-- ORDER TABLE -->
+
+      @if (getFilteredOrders().length === 0) {
+
+        <div class="empty-orders">
+
+          <h3>No Orders Found</h3>
+
+          <p>
+            There are no orders matching the selected status.
+          </p>
+
+        </div>
+
+      } @else {
+
+        <div class="table-wrapper order-table-wrapper">
+
+          <table class="order-table">
+
+            <thead>
+
+              <tr>
+                <th>Order ID</th>
+                <th>Items</th>
+                <th>Total Amount</th>
+                <th>Order Date</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+
+            </thead>
+
+            <tbody>
+
+              @for (order of getFilteredOrders(); track order._id) {
+
+                <tr>
+
+                  <!-- ORDER ID -->
+
+                  <td>
+                    <span class="order-id">
+                      #{{ order._id.slice(-6).toUpperCase() }}
+                    </span>
+                  </td>
+
+
+                  <!-- ORDER ITEMS -->
+
+                  <td>
+
+                    <div class="order-items">
+
+                      @for (item of order.items; track $index) {
+
+                        <div class="order-item">
+
+                          <span class="order-item-name">
+                            {{ item.name }}
+                          </span>
+
+                          <span class="order-item-details">
+                            {{ item.quantity }} ×
+                            {{ item.price | currency:'INR':'symbol':'1.2-2' }}
+                          </span>
+
+                        </div>
+
+                      }
+
+                    </div>
+
+                  </td>
+
+
+                  <!-- TOTAL -->
+
+                  <td class="order-total">
+
+                    {{ order.totalAmount | currency:'INR':'symbol':'1.2-2' }}
+
+                  </td>
+
+
+                  <!-- DATE -->
+
+                  <td>
+
+                    {{ order.createdAt | date:'dd MMM yyyy, hh:mm a' }}
+
+                  </td>
+
+
+                  <!-- STATUS -->
+
+                  <td>
+
+                    <span
+                      class="order-status-badge"
+                      [class.status-pending]="order.status === 'Pending'"
+                      [class.status-preparing]="order.status === 'Preparing'"
+                      [class.status-ready]="order.status === 'Ready'"
+                      [class.status-completed]="order.status === 'Completed'"
+                      [class.status-cancelled]="order.status === 'Cancelled'">
+
+                      {{ order.status }}
+
+                    </span>
+
+                  </td>
+
+
+                  <!-- ACTIONS -->
+
+                  <td>
+
+                    @if (getNextStatuses(order.status).length > 0) {
+
+                      <div class="order-actions">
+
+                        @for (
+                          nextStatus of getNextStatuses(order.status);
+                          track nextStatus
+                        ) {
+
+                          <button
+                            type="button"
+                            class="order-action-button"
+                            [class.cancel-order-button]="nextStatus === 'Cancelled'"
+                            [class.complete-order-button]="nextStatus === 'Completed'"
+                            [disabled]="updatingOrderIds().includes(order._id)"
+                            (click)="updateOrderStatus(order._id, nextStatus)">
+
+                            @if (updatingOrderIds().includes(order._id)) {
+
+                              Updating...
+
+                            } @else {
+
+                              @switch (nextStatus) {
+
+                                @case ('Preparing') {
+                                  Start Preparing
+                                }
+
+                                @case ('Ready') {
+                                  Mark Ready
+                                }
+
+                                @case ('Completed') {
+                                  Complete Order
+                                }
+
+                                @case ('Cancelled') {
+                                  Cancel Order
+                                }
+
+                              }
+
+                            }
+
+                          </button>
+
+                        }
+
+                      </div>
+
+                    } @else {
+
+                      <span class="completed-label">
+                        No further actions
+                      </span>
+
+                    }
+
+                  </td>
+
+                </tr>
+
+              }
+
+            </tbody>
+
+          </table>
+
+        </div>
+
+      }
+
+    }
+
+  </section>
+
+
+  <!-- ============================= -->
+  <!-- ADMIN FOOTER                  -->
+  <!-- ============================= -->
+
+  <footer class="admin-footer">
+
+    <p>
+      SmartBite · Canteen Management System
+    </p>
+
+  </footer>
+
+</div>

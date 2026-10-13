@@ -1,0 +1,69 @@
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="brand">
+      <div class="brand-icon">🍽️</div>
+      <h1>SmartBite</h1>
+      <p>Fresh food. Less waiting.</p>
+    </div>
+
+    <h2>Welcome Back!</h2>
+    <p class="subtitle">Log in to your SmartBite account.</p>
+
+    @if (errorMessage()) {
+      <div class="message error" role="alert">
+        {{ errorMessage() }}
+      </div>
+    }
+
+    @if (successMessage()) {
+      <div class="message success" role="status">
+        {{ successMessage() }}
+      </div>
+    }
+
+    <form (ngSubmit)="onLogin()" #loginForm="ngForm">
+      <div class="form-group">
+        <label for="email">Email Address</label>
+
+        <input
+          id="email"
+          type="email"
+          name="email"
+          [(ngModel)]="email"
+          placeholder="Enter your email"
+          autocomplete="email"
+          required
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+
+        <input
+          id="password"
+          type="password"
+          name="password"
+          [(ngModel)]="password"
+          placeholder="Enter your password"
+          autocomplete="current-password"
+          required
+        />
+      </div>
+
+      <button
+        type="submit"
+        class="auth-button"
+        [disabled]="isLoading() || loginForm.invalid"
+      >
+        {{ isLoading() ? 'Logging in...' : 'Log In' }}
+      </button>
+    </form>
+
+    <p class="auth-footer">
+      Don't have an account?
+      <a routerLink="/register">Create an account</a>
+    </p>
+
+    <a class="back-link" routerLink="/">← Back to menu</a>
+  </div>
+</div>
