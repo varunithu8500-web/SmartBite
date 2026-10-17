@@ -212,7 +212,7 @@ export class Admin implements OnInit {
   // Retrieve all food items
   loadFoods(): void {
     this.http.get<Food[]>(
-      'http://localhost:3000/api/admin/foods'
+      'https://smartbite-backend-lpjd.onrender.com/api/admin/foods'
     ).subscribe({
       next: foods => {
         this.foods.set(foods);
@@ -267,7 +267,7 @@ export class Admin implements OnInit {
       message: string;
       food: Food;
     }>(
-      'http://localhost:3000/api/foods',
+      'https://smartbite-backend-lpjd.onrender.com/api/foods',
       { name, price, category }
     ).subscribe({
       next: response => {
@@ -352,7 +352,7 @@ export class Admin implements OnInit {
       message: string;
       food: Food;
     }>(
-      `http://localhost:3000/api/foods/${id}`,
+      `https://smartbite-backend-lpjd.onrender.com/api/foods/${id}`,
       { name, price, category }
     ).subscribe({
       next: response => {
@@ -386,7 +386,7 @@ export class Admin implements OnInit {
       message: string;
       food: Food;
     }>(
-      `http://localhost:3000/api/foods/${food._id}/availability`,
+      `https://smartbite-backend-lpjd.onrender.com/api/foods/${food._id}/availability`,
       { available: newAvailability }
     ).subscribe({
       next: () => {
@@ -423,7 +423,7 @@ export class Admin implements OnInit {
     this.errorMessage.set('');
 
     this.http.delete<{ message: string }>(
-      `http://localhost:3000/api/foods/${food._id}`
+      `https://smartbite-backend-lpjd.onrender.com/api/foods/${food._id}`
     ).subscribe({
       next: response => {
         alert(response.message);

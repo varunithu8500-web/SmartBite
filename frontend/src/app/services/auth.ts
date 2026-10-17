@@ -28,7 +28,7 @@ export class AuthService {
 
   private http = inject(HttpClient);
 
-  private apiUrl = 'http://localhost:3000/api/auth';
+  private apiUrl = 'https://smartbite-backend-lpjd.onrender.com/api/auth';
 
   private readonly TOKEN_KEY = 'smartbite_token';
   private readonly USER_KEY = 'smartbite_user';

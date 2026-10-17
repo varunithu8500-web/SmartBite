@@ -45,8 +45,8 @@ export class FoodService {
 
   private http = inject(HttpClient);
 
-  private apiUrl = 'http://localhost:3000/api/foods';
-  private orderUrl = 'http://localhost:3000/api/orders';
+  private apiUrl = 'https://smartbite-backend-lpjd.onrender.com/api/foods';
+private orderUrl = 'https://smartbite-backend-lpjd.onrender.com/api/orders';
 
   // Retrieve available food items
   getFoods(): Observable<Food[]> {

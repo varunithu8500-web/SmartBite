@@ -7,8 +7,9 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const token = authService.getToken();
 
   // Attach the token only to SmartBite backend API requests.
-  const isSmartBiteApi = req.url.startsWith('http://localhost:3000/api/');
-
+  const isSmartBiteApi = req.url.startsWith(
+  'https://smartbite-backend-lpjd.onrender.com/api/'
+);
   // Login and registration do not require authentication.
   const isAuthRequest =
     req.url.includes('/api/auth/login') ||
