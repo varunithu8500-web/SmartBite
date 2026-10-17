@@ -17,8 +17,13 @@ const {
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+const allowedOrigins = [
+    'http://localhost:4200',
+    'https://smart-bite-ashy.vercel.app'
+];
+
 app.use(cors({
-    origin: 'http://localhost:4200'
+    origin: allowedOrigins
 }));
 
 app.use(express.json());
@@ -31,17 +36,100 @@ app.get('/', (req, res) => {
 });
 
 // Get all available food items from MongoDB
+// Get food items for the customer menu
 app.get('/api/foods', async (req, res) => {
     try {
-        const foods = await Food.find({ available: true });
+        const foods = await Food.find().sort({ name: 1 });
 
-        res.json(foods);
+        return res.status(200).json(foods);
+
     } catch (error) {
-        res.status(500).json({
-            message: 'Failed to retrieve food items'
+        console.error('Failed to retrieve food items:', error);
+
+        return res.status(500).json({
+            message: 'Failed to retrieve food items.'
         });
     }
 });
+// Allow customers to cancel only their own Pending orders
+app.patch(
+  '/api/orders/:id/cancel',
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      // Validate the order ID
+      if (!mongoose.isValidObjectId(id)) {
+        return res.status(400).json({
+          message: 'Invalid order ID.'
+        });
+      }
+
+      // Find an order belonging to this customer
+      const order = await Order.findOne({
+        _id: id,
+        userId: req.user.id
+      });
+
+      // Do not reveal another customer's order
+      if (!order) {
+        return res.status(404).json({
+          message: 'Order not found.'
+        });
+      }
+
+      // Customers can cancel only Pending orders
+      if (order.status !== 'Pending') {
+        return res.status(409).json({
+          message:
+            `This order cannot be cancelled because its status is ${order.status}. Only Pending orders can be cancelled.`
+        });
+      }
+
+      // Update only if the order is still Pending
+      const cancelledOrder = await Order.findOneAndUpdate(
+        {
+          _id: id,
+          userId: req.user.id,
+          status: 'Pending'
+        },
+        {
+          $set: {
+            status: 'Cancelled'
+          }
+        },
+        {
+          new: true,
+          runValidators: true
+        }
+      );
+
+      // Handle a simultaneous status change
+      if (!cancelledOrder) {
+        return res.status(409).json({
+          message:
+            'The order status changed before cancellation. Refresh your order history and try again.'
+        });
+      }
+
+      return res.status(200).json({
+        message: 'Order cancelled successfully.',
+        order: cancelledOrder
+      });
+
+    } catch (error) {
+      console.error(
+        'Failed to cancel customer order:',
+        error
+      );
+
+      return res.status(500).json({
+        message: 'Unable to cancel this order.'
+      });
+    }
+  }
+);
 // Get all food items for the admin panel
 app.get(
   '/api/admin/foods',
