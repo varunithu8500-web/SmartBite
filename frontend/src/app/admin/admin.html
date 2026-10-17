@@ -14,13 +14,6 @@
       <button
         type="button"
         class="refresh-button"
-        (click)="loadFoods()">
-        ↻ Refresh Menu
-      </button>
-
-      <button
-        type="button"
-        class="refresh-button"
         (click)="loadOrders()"
         [disabled]="isLoadingOrders()">
         {{ isLoadingOrders() ? 'Loading Orders...' : '↻ Refresh Orders' }}
