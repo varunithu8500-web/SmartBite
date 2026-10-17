@@ -234,6 +234,22 @@
                     Total Amount: ₹{{ order.totalAmount }}
                   </strong>
                 </div>
+                <!-- Cancel Order Button -->
+@if (order.status === 'Pending') {
+  <div class="customer-order-actions">
+    <button
+      type="button"
+      class="cancel-order-button"
+      [disabled]="cancellingOrderId() === order._id"
+      (click)="cancelOrder(order._id)">
+
+      {{ cancellingOrderId() === order._id
+        ? 'Cancelling...'
+        : 'Cancel Order' }}
+
+    </button>
+  </div>
+}
 
               </article>
             }

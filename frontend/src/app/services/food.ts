@@ -80,4 +80,11 @@ private orderUrl = 'https://smartbite-backend-lpjd.onrender.com/api/orders';
       { status }
     );
   }
+    // Cancel an existing customer order
+  cancelOrder(orderId: string): Observable<OrderResponse> {
+    return this.http.patch<OrderResponse>(
+      `${this.orderUrl}/${orderId}/cancel`,
+      {}
+    );
+  }
 }

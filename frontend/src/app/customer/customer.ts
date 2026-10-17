@@ -37,10 +37,13 @@ export class Customer implements OnInit {
   cartItems = signal<CartItem[]>([]);
 
   // Customer order history
-  orders = signal<Order[]>([]);
-  isLoadingOrders = signal(false);
-  orderHistoryError = signal('');
-  orderStatusMessage = signal('');
+orders = signal<Order[]>([]);
+isLoadingOrders = signal(false);
+orderHistoryError = signal('');
+orderStatusMessage = signal('');
+
+// Order cancellation
+cancellingOrderId = signal<string | null>(null);
 
   // Order placement
   isPlacingOrder = signal(false);
@@ -132,7 +135,57 @@ export class Customer implements OnInit {
       }
     });
   }
+// Cancel a pending order
+cancelOrder(orderId: string): void {
+  if (!this.authService.isLoggedIn()) {
+    this.router.navigate(['/login']);
+    return;
+  }
 
+  if (this.cancellingOrderId()) {
+    return;
+  }
+
+  const confirmed = window.confirm(
+    'Are you sure you want to cancel this order?'
+  );
+
+  if (!confirmed) {
+    return;
+  }
+
+  this.cancellingOrderId.set(orderId);
+  this.orderStatusMessage.set('');
+  this.orderHistoryError.set('');
+
+  this.foodService.cancelOrder(orderId).subscribe({
+    next: (response) => {
+      this.orderStatusMessage.set(
+        response.message || 'Order cancelled successfully.'
+      );
+
+      this.cancellingOrderId.set(null);
+      this.loadOrders();
+    },
+
+    error: (error) => {
+      console.error('Failed to cancel order:', error);
+
+      this.orderHistoryError.set(
+        error.error?.message ||
+        'Unable to cancel this order. Please try again.'
+      );
+
+      this.cancellingOrderId.set(null);
+
+      if (error.status === 401) {
+        this.authService.logout();
+        this.orders.set([]);
+        this.router.navigate(['/login']);
+      }
+    }
+  });
+}
   // Add food to the cart
   addToCart(food: Food): void {
     this.clearOrderMessages();
