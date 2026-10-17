@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 
 import {
   FoodService,
@@ -19,7 +19,7 @@ interface CartItem {
 @Component({
   selector: 'app-customer',
   standalone: true,
-  imports: [DatePipe],
+ imports: [DatePipe, RouterLink],
   templateUrl: './customer.html',
   styleUrl: './customer.css'
 })
