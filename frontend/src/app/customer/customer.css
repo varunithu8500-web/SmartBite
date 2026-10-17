@@ -681,3 +681,79 @@ select:focus-visible {
   background: #fee2e2;
   color: #991b1b;
 }
+
+/* ========================================
+   LOGIN AND REGISTER NAVIGATION
+======================================== */
+
+.auth-navigation {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 0 0 20px;
+}
+
+.auth-navigation a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 10px 22px;
+  border: 2px solid #21864d;
+  border-radius: 9px;
+  background: #ffffff;
+  color: #176b3b;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  pointer-events: auto;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.auth-navigation a:hover {
+  background: #21864d;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(23, 107, 59, 0.18);
+  transform: translateY(-2px);
+}
+
+.auth-navigation a:focus-visible {
+  outline: 3px solid #90d4a3;
+  outline-offset: 3px;
+}
+
+.auth-navigation a:active {
+  transform: scale(0.98);
+}
+
+.auth-navigation button {
+  min-height: 42px;
+}
+
+.auth-navigation .welcome-message {
+  color: #243126;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+@media (max-width: 600px) {
+  .auth-navigation {
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .auth-navigation a {
+    flex: 1;
+    min-width: 110px;
+    padding: 10px 14px;
+  }
+}
